@@ -1,28 +1,61 @@
 "use client";
 import { toast } from "sonner";
 import { uploadToS3, getUrl } from "@/config/s3";
-import { PlusIcon, UploadIcon } from "lucide-react";
-import React, { useCallback } from "react";
+import { Loader2, UploadIcon } from "lucide-react";
+import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { dataTagSymbol, useMutation } from "@tanstack/react-query";
+import axios from "axios";
 function Uploader() {
+  const [uploading, setUploading] = useState<boolean>(false);
+  const { mutate, isPending } = useMutation({
+    mutationFn: async ({
+      fileName,
+      file_key,
+    }: {
+      fileName: string;
+      file_key: string;
+    }) => {
+      const response = await axios.post("/api/create-chat", {
+        fileName,
+        file_key,
+      });
+
+      return response.data;
+    },
+  });
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { "application/pdf": [".pdf"] },
     maxFiles: 1,
     onDrop: async (acceptedFile) => {
-      console.log(acceptedFile);
       const file = acceptedFile[0];
 
       if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size is too big");
+        toast.error("File size is too large");
         return;
       }
       try {
-        const response = await uploadToS3(file);
+        setUploading(true);
+        const data = await uploadToS3(file);
 
-        console.log("🚀 ~ onDrop: ~ response:", response);
-         
+        if (!data?.fileName || !data.file_key) {
+          toast.error("some thing went wrong...");
+          return;
+        }
+
+        mutate(data, {
+          onSuccess: (data) => {
+            toast.success(data.message)
+          },
+          onError: (error) => {
+            toast.error("some thing went wrong...");
+          },
+        });
       } catch (error) {
-      console.log("🚀 ~ onDrop: ~ error:", error)
+        console.log("🚀 ~ onDrop: ~ error:", error);
+      } finally {
+        setUploading(false);
       }
     },
   });
@@ -33,7 +66,10 @@ function Uploader() {
       className=" h-44  border-2 cursor-pointer border-dashed bg-white rounded-lg flex justify-center items-center py-5 shadow-l  text-center"
     >
       <input {...getInputProps()} />
-      {isDragActive ? (
+
+      {uploading || isPending ? (
+        <Loader2 className=" h-10 w-10 text-blue-500 animate-spin" />
+      ) : isDragActive ? (
         <>
           <UploadIcon />
           <p>Drop the files here ...</p>
