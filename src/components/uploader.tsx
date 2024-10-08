@@ -6,8 +6,10 @@ import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { dataTagSymbol, useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 function Uploader() {
   const [uploading, setUploading] = useState<boolean>(false);
+  const router = useRouter()
   const { mutate, isPending } = useMutation({
     mutationFn: async ({
       fileName,
@@ -47,6 +49,7 @@ function Uploader() {
         mutate(data, {
           onSuccess: (data) => {
             toast.success(data.message)
+             router.push(`/chat/${data.chat_id}`)
           },
           onError: (error) => {
             toast.error("some thing went wrong...");
