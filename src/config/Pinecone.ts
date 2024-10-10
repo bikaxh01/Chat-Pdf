@@ -53,7 +53,7 @@ export async function s3ToPineCone(file_key: string) {
   const client = await getPinecone();
   //Remove non ascii character
   const pineConeIndex = await client.index("pdf");
-  const nameSpace = pineConeIndex.namespace(removeNonAsciiCharacters(fileName));
+  const nameSpace = pineConeIndex.namespace(removeNonAsciiCharacters(file_key));
 
   await nameSpace.upsert(vectors);
 
@@ -117,7 +117,8 @@ export async function prepareDocument(page: PDFPAGE) {
   return chunkedDocs;
 }
 
-function removeNonAsciiCharacters(file_key: string) {
+export function removeNonAsciiCharacters(file_key: string) {
   const asciiString = file_key.replace(/[^\x00-\x7F]+/g, "");
+  console.log("🚀 ~ removeNonAsciiCharacters ~ asciiString:", asciiString)
   return asciiString;
 }

@@ -43,8 +43,8 @@ async function chatPage({
         <div className=" max-h-screen p-4 overflow-hidden flex-[5]">
           <PDFviewer PDF_URL={currentChat?.pdf_Url || ""} />
         </div>
-        <div className=" flex-[3] border-l-4 border-l-slate-200">
-          <ChatComponent/>
+        <div className=" flex-[3] border-l-4  border-l-slate-200">
+          <ChatComponent  chat_Id={chat_id}/>
         </div>
       </div>
     </div>
