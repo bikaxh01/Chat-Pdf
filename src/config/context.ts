@@ -31,12 +31,15 @@ export async function getSimilarEmbeddings(
 export async function getContext(query: string, file_Key: string) {
   try {
     const embedQuery = await getEmbedding(query);
+    
 
     const getVector = await getSimilarEmbeddings(embedQuery, file_Key);
+    
 
     const filteredVectors = await getVector.filter(
       (embed) => embed.score && embed.score > 0.7
     );
+    
 
     type Metadata = {
       text: string;

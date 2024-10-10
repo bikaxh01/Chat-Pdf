@@ -5,7 +5,8 @@ import {
   Document,
   RecursiveCharacterTextSplitter,
 } from "@pinecone-database/doc-splitter";
-
+import fs from "fs";
+import path from "path";
 import { getEmbedding } from "./embedding";
 import md5 from "md5";
 import { Vector } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch/data";
@@ -56,6 +57,29 @@ export async function s3ToPineCone(file_key: string) {
   const nameSpace = pineConeIndex.namespace(removeNonAsciiCharacters(file_key));
 
   await nameSpace.upsert(vectors);
+  const fs = require("fs");
+
+  const directory = "/chat-pdf/Doc";
+
+  fs.readdir(directory, (err: any, files: any) => {
+    if (err) {
+      console.error("Error reading the directory:", err);
+      return;
+    }
+
+    // Loop through all files and delete each one
+    files.forEach((file: any) => {
+      const filePath = path.join(directory, file);
+
+      fs.unlink(filePath, (err: any) => {
+        if (err) {
+          console.error(`Error deleting file ${file}:`, err);
+        } else {
+          console.log(`File ${file} deleted successfully`);
+        }
+      });
+    });
+  });
 
   return documents[0];
 }
@@ -119,6 +143,6 @@ export async function prepareDocument(page: PDFPAGE) {
 
 export function removeNonAsciiCharacters(file_key: string) {
   const asciiString = file_key.replace(/[^\x00-\x7F]+/g, "");
-  console.log("🚀 ~ removeNonAsciiCharacters ~ asciiString:", asciiString)
+
   return asciiString;
 }
