@@ -22,7 +22,7 @@ export async function downloadFile(file_key: string) {
 
     const file = await s3.getObject(params).promise();
 
-    const filename = `/chat-pdf/Doc/${Date.now()}.pdf`;
+    const filename = `/tmp/${Date.now()}.pdf`;
     fs.writeFileSync(filename, file.Body as Buffer);
 
     return filename;

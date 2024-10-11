@@ -59,7 +59,7 @@ export async function s3ToPineCone(file_key: string) {
   await nameSpace.upsert(vectors);
   const fs = require("fs");
 
-  const directory = "/chat-pdf/Doc";
+  const directory = "/tmp";
 
   fs.readdir(directory, (err: any, files: any) => {
     if (err) {
