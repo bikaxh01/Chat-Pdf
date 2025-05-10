@@ -48,10 +48,12 @@ export async function s3ToPineCone(file_key: string) {
 
   //Embed text and get vectors
   const vectors = await Promise.all(documents.flat().map(embedDocument));
+  
 
-  // upload to pinecone DB
+ 
 
   const client = await getPinecone();
+  
   //Remove non ascii character
   const pineConeIndex = await client.index("pdf");
   const nameSpace = pineConeIndex.namespace(removeNonAsciiCharacters(file_key));
@@ -85,6 +87,7 @@ export async function s3ToPineCone(file_key: string) {
 }
 
 async function embedDocument(doc: Document) {
+  
   try {
     const embedding = await getEmbedding(doc.pageContent);
     const hash = md5(doc.pageContent);

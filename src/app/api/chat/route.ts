@@ -1,13 +1,9 @@
 import { Configuration, OpenAIApi } from "openai-edge";
-import { OpenAIStream, StreamingTextResponse, Message } from "ai";
+import { Message } from "ai";
+import { streamText } from "ai";
 import { prisma_client } from "@/config/prisma";
 import { getContext } from "@/config/context";
-
-const config = new Configuration({
-  apiKey: process.env.NEXT_PUBLIC_OPEN_AI_API_KEY,
-});
-
-const openai = new OpenAIApi(config);
+import { anthropic } from "@ai-sdk/anthropic";
 
 interface chatBody {
   messages: Message[];
@@ -35,7 +31,6 @@ export async function POST(req: Request) {
 
     const context = await getContext(lastMessage.content, file_Key);
     const prompt = {
-      role: "system",
       content: `AI assistant is a brand new, powerful, human-like artificial intelligence.
         The traits of AI include expert knowledge, helpfulness, cleverness, and articulateness.
         AI is a well-behaved and well-mannered individual.
@@ -49,38 +44,38 @@ export async function POST(req: Request) {
         If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
         AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
         AI assistant will not invent anything that is not drawn directly from the context.
+
+        THIS IS THE PREVIOUS CONVERSATION HISTORY 
+        ${[...messages]}
         `,
     };
-    const response = await openai.createChatCompletion({
-      model: "gpt-4o",
-      messages:[
-        //@ts-ignore
-        prompt, ...messages.filter((message)=>message.role === "user") 
-      ],
-      stream: true,
-    });
-    const stream = OpenAIStream(response, {
-      onStart: async () => {
-        await prisma_client.message.create({
-          data: {
-            chat_Id: chat.id,
-            content: lastMessage.content,
-            role: "user",
-          },
-        });
+
+    await prisma_client.message.create({
+      data: {
+        chat_Id: chat.id,
+        content: lastMessage.content,
+        role: "user",
       },
-      onCompletion: async (completion) => {
+    });
+    const result = streamText({
+      model: anthropic("claude-3-5-sonnet-20240620"),
+
+      system: prompt.content,
+
+      prompt: lastMessage.content,
+
+      onFinish: async (result) => {
         await prisma_client.message.create({
           data: {
             chat_Id: chat.id,
-            content: completion,
-            role: "system",
+            content: result.text,
+            role: "assistant",
           },
         });
       },
     });
 
-    return new StreamingTextResponse(stream);
+    return result.toDataStreamResponse();
   } catch (error) {
     console.log("🚀 ~ POST ~ error:", error);
     return Response.json("Internal Server Error", {

@@ -9,7 +9,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 function Uploader() {
   const [uploading, setUploading] = useState<boolean>(false);
-  const router = useRouter()
+  const router = useRouter();
   const { mutate, isPending } = useMutation({
     mutationFn: async ({
       fileName,
@@ -32,27 +32,31 @@ function Uploader() {
     maxFiles: 1,
     onDrop: async (acceptedFile) => {
       const file = acceptedFile[0];
-
+      
       if (file.size > 10 * 1024 * 1024) {
         toast.error("File size is too large");
         return;
       }
       try {
         setUploading(true);
+        console.log("🚀 ~ onDrop: ~ file:", file);
+
         const data = await uploadToS3(file);
 
         if (!data?.fileName || !data.file_key) {
-          toast.error("some thing went wrong...");
+          toast.error("something went wrong...");
           return;
         }
 
         mutate(data, {
           onSuccess: (data) => {
-            toast.success(data.message)
-             router.push(`/chat/${data.chat_id}`)
+            toast.success(data.message);
+            router.push(`/chat/${data.chat_id}`);
           },
           onError: (error) => {
-            toast.error("some thing went wrong...");
+            console.log("🚀 ~ onDrop: ~ error:", error);
+
+            toast.error("something went wrong...");
           },
         });
       } catch (error) {

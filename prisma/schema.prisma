@@ -29,7 +29,7 @@ model message {
 
 enum Role {
   user
-  system
+  assistant
 }
 
 
